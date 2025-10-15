@@ -11,6 +11,8 @@ export function useIsUserScrolling(delay: number = 100) {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     const handleUserScroll = () => {
       setIsUserScrolling(true);
       

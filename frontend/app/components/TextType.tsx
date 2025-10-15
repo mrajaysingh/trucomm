@@ -67,7 +67,7 @@ const TextType = ({
   };
 
   useEffect(() => {
-    if (!startOnVisible || !containerRef.current) return;
+    if (!startOnVisible || !containerRef.current || typeof window === 'undefined') return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -85,7 +85,7 @@ const TextType = ({
   }, [startOnVisible]);
 
   useEffect(() => {
-    if (showCursor && cursorRef.current) {
+    if (showCursor && cursorRef.current && typeof window !== 'undefined') {
       gsap.set(cursorRef.current, { opacity: 1 });
       gsap.to(cursorRef.current, {
         opacity: 0,

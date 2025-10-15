@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Lenis from 'lenis';
 
 let globalLenis: Lenis | null = null;
@@ -11,24 +11,34 @@ let globalLenis: Lenis | null = null;
  */
 export function useLenis() {
   const lenisRef = useRef<Lenis | null>(null);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    // Initialize Lenis only once globally
+    // Set client-side flag
+    setIsClient(true);
+    
+    // Initialize Lenis only once globally and only on client
     if (!globalLenis && typeof window !== 'undefined') {
-      globalLenis = new Lenis({
-        duration: 1.2,
-        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-        smoothWheel: true,
-        wheelMultiplier: 1,
-        touchMultiplier: 2,
-      });
+      try {
+        globalLenis = new Lenis({
+          duration: 1.2,
+          easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+          smoothWheel: true,
+          wheelMultiplier: 1,
+          touchMultiplier: 2,
+        });
 
-      // Start the animation loop
-      function raf(time: number) {
-        globalLenis?.raf(time);
+        // Start the animation loop
+        function raf(time: number) {
+          if (globalLenis) {
+            globalLenis.raf(time);
+            requestAnimationFrame(raf);
+          }
+        }
         requestAnimationFrame(raf);
+      } catch (error) {
+        console.warn('Failed to initialize Lenis:', error);
       }
-      requestAnimationFrame(raf);
     }
 
     lenisRef.current = globalLenis;
@@ -40,27 +50,31 @@ export function useLenis() {
   }, []);
 
   const scrollTo = (target: string | number, options?: { offset?: number; duration?: number }) => {
-    if (!globalLenis) return;
+    if (!isClient || !globalLenis || typeof window === 'undefined') return;
 
-    if (typeof target === 'string') {
-      // Handle anchor links
-      const element = document.querySelector(target);
-      if (element instanceof HTMLElement) {
-        globalLenis.scrollTo(element, {
-          offset: options?.offset || 0,
+    try {
+      if (typeof target === 'string') {
+        // Handle anchor links
+        const element = document.querySelector(target);
+        if (element instanceof HTMLElement) {
+          globalLenis.scrollTo(element, {
+            offset: options?.offset || 0,
+            duration: options?.duration || 1.2,
+          });
+        }
+      } else {
+        // Handle numeric positions
+        globalLenis.scrollTo(target, {
           duration: options?.duration || 1.2,
         });
       }
-    } else {
-      // Handle numeric positions
-      globalLenis.scrollTo(target, {
-        duration: options?.duration || 1.2,
-      });
+    } catch (error) {
+      console.warn('ScrollTo failed:', error);
     }
   };
 
   return {
-    lenis: lenisRef.current,
+    lenis: isClient ? lenisRef.current : null,
     scrollTo,
   };
 }

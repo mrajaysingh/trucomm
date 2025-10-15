@@ -122,6 +122,8 @@ async function main() {
     where: { softwareLoginEmail: 'admin@trucomm.com' },
     update: {},
     create: {
+      firstName: 'Super',
+      lastName: 'Admin',
       username: 'superadmin',
       email: 'admin@trucomm.com',
       workEmail: 'admin@trucomm.com',

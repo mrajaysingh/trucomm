@@ -179,7 +179,7 @@ export default function Orb({
 
   useEffect(() => {
     const container = ctnDom.current;
-    if (!container) return;
+    if (!container || typeof window === 'undefined') return;
 
     const renderer = new Renderer({ alpha: true, premultipliedAlpha: false });
     const gl = renderer.gl;

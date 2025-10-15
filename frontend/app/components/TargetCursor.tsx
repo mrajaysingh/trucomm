@@ -40,7 +40,7 @@ const TargetCursor: React.FC<TargetCursorProps> = ({
   }, []);
 
   useEffect(() => {
-    if (!cursorRef.current) return;
+    if (!cursorRef.current || typeof window === 'undefined') return;
 
     const originalCursor = document.body.style.cursor || 'auto';
 

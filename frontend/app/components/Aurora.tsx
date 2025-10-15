@@ -130,7 +130,7 @@ export default function Aurora(props: AuroraProps) {
 
   useEffect(() => {
     const ctn = ctnDom.current;
-    if (!ctn) return;
+    if (!ctn || typeof window === 'undefined') return;
 
     const renderer = new Renderer({
       alpha: true,

@@ -127,7 +127,7 @@ export default function PurchaseModal({ plan, onClose }: PurchaseModalProps) {
       
       while (retryCount < maxRetries) {
         try {
-          response = await fetch('http://localhost:5000/api/purchase/process', {
+          response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/purchase/process`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
