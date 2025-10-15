@@ -1,0 +1,202 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CEO
+  HR
+  EMPLOYEE
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum PlanType {
+  BASIC
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+model User {
+  id                String        @id @default(cuid())
+  firstName         String?
+  lastName          String?
+  username          String        @unique
+  email             String        @unique
+  workEmail         String        @unique
+  designation       UserRole
+  companyName       String?
+  companyId         String?
+  companyAddress    String?
+  currentIP         String?
+  mmid              String        @unique @default(cuid())
+  softwareLoginEmail String       @unique
+  password          String
+  isActive          Boolean       @default(true)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  // Relations
+  purchases         Purchase[]
+  loginSessions     LoginSession[]
+  
+  @@map("users")
+}
+
+model SuperAdmin {
+  id                String        @id @default(cuid())
+  firstName         String
+  lastName          String
+  username          String        @unique
+  email             String        @unique
+  workEmail         String        @unique
+  softwareLoginEmail String       @unique
+  password          String
+  currentIP         String?
+  mmid              String        @unique @default(cuid())
+  isActive          Boolean       @default(true)
+  lastLoginAt       DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  // Relations
+  loginSessions     SuperAdminLoginSession[]
+  
+  @@map("super_admins")
+}
+
+model Plan {
+  id          String   @id @default(cuid())
+  name        String
+  type        PlanType
+  description String?
+  price       Float
+  features    String[] // Array of features
+  duration    Int      // Duration in months
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  purchases   Purchase[]
+  
+  @@map("plans")
+}
+
+model Coupon {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  description String?
+  discountType String  // "PERCENTAGE" or "FIXED"
+  discountValue Float
+  minAmount    Float?  // Minimum purchase amount
+  maxDiscount  Float?  // Maximum discount amount
+  usageLimit   Int?    // Maximum number of uses
+  usedCount    Int     @default(0)
+  isActive     Boolean @default(true)
+  validFrom    DateTime
+  validUntil   DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  // Relations
+  purchases    Purchase[]
+  
+  @@map("coupons")
+}
+
+model Purchase {
+  id              String        @id @default(cuid())
+  userId          String
+  planId          String
+  couponId        String?
+  
+  // Payment details
+  amount          Float
+  discountAmount  Float         @default(0)
+  gstAmount       Float
+  totalAmount     Float
+  paymentStatus   PaymentStatus @default(PENDING)
+  paymentId       String?       // External payment gateway ID
+  paymentMethod   String?       // "PhonePay", "GooglePay", "Paytm", "UPI", "Cash", etc.
+  transactionId   String?       // Transaction ID for payment
+  purchaseDate    DateTime?     // Purchase date
+  purchaseTime    String?       // Purchase time
+  
+  // User details at time of purchase
+  userIP          String
+  userAgent       String?
+  
+  // Timestamps
+  purchasedAt     DateTime      @default(now())
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relations
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan            Plan          @relation(fields: [planId], references: [id])
+  coupon          Coupon?       @relation(fields: [couponId], references: [id])
+  
+  @@map("purchases")
+}
+
+model LoginSession {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  ipAddress String
+  userAgent String?
+  isActive  Boolean  @default(true)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("login_sessions")
+}
+
+model SuperAdminLoginSession {
+  id        String   @id @default(cuid())
+  superAdminId String
+  token     String   @unique
+  ipAddress String
+  userAgent String?
+  isActive  Boolean  @default(true)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  superAdmin SuperAdmin @relation(fields: [superAdminId], references: [id], onDelete: Cascade)
+  
+  @@map("super_admin_login_sessions")
+}
+
+model SuperPin {
+  id                String   @id @default(cuid())
+  pin               String   @unique
+  description       String?
+  setupPageUrlAlias String   @default("/setup-super")
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@map("super_pins")
+}
